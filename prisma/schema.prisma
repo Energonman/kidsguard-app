@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          UserRole
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profile       Profile?
+  devices       Device[]
+  activities    Activity[]
+  restrictions  Restriction[]
+}
+
+model Profile {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  name      String
+  age       Int?
+  avatar    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  type        String
+  status      DeviceStatus @default(INACTIVE)
+  lastSeen    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities  Activity[]
+}
+
+model Activity {
+  id          String    @id @default(cuid())
+  userId      String
+  deviceId    String
+  type        ActivityType
+  content     String
+  timestamp   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device      Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+}
+
+model Restriction {
+  id          String    @id @default(cuid())
+  userId      String
+  type        RestrictionType
+  rule        String
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  PARENT
+  CHILD
+}
+
+enum DeviceStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ActivityType {
+  APP
+  WEBSITE
+  SEARCH
+}
+
+enum RestrictionType {
+  APP
+  WEBSITE
+  TIME
+}
